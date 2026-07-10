@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EntryRow from '../../components/EntryRow.astro';
+import { getSortedMemories, collectTags, memoriesByTag, excerpt } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const memories = await getSortedMemories();
+  const tags = collectTags(memories);
+  return tags.map((t) => ({
+    params: { tag: t.tag },
+    props: { tag: t.tag, items: memoriesByTag(memories, t.tag) },
+  }));
+}
+
+const base = import.meta.env.BASE_URL;
+const { tag, items } = Astro.props;
+---
+
+<BaseLayout title={`${tag} | خاطرات فردا`}>
+  <div class="mx-auto max-w-4xl px-5 py-14 md:px-10 md:py-20">
+    <a
+      href={`${base}tags/`}
+      class="inline-flex items-center gap-1.5 text-sm text-muted no-underline transition hover:text-primary"
+    >
+      <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18l6-6-6-6"></path>
+      </svg>
+      همه‌ی برچسب‌ها
+    </a>
+
+    <header class="mt-6 mb-12">
+      <span class="text-sm text-primary">برچسب</span>
+      <h1 class="mt-1 font-display text-4xl text-ink md:text-5xl">{tag}</h1>
+      <p class="mt-2 text-muted">{items.length} خاطره</p>
+    </header>
+
+    <div class="space-y-5">
+      {
+        items.map((m) => (
+          <EntryRow
+            slug={m.id}
+            title={m.data.title}
+            date={m.data.date}
+            cover={m.data.cover}
+            tags={m.data.tags}
+            excerpt={excerpt(m.body)}
+            hasAudio={!!m.data.audio}
+          />
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>

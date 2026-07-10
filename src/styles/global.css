@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* حالت تاریک دستی: با کلاس .dark روی <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── سیستم طراحی «خاطرات فردا» (اقتباس از Heirloom/Lumina، فارسی‌سازی‌شده) ──
+   تیترها: Markazi Text (display، حسِ ادیتوریال)؛ متن: Vazirmatn.
+   توکن‌ها به CSS-var زنده اشاره می‌کنند تا با سوییچ تم به‌صورت runtime عوض شوند. */
+@theme inline {
+  --font-sans: "Vazirmatn Variable", "Segoe UI", Tahoma, sans-serif;
+  --font-display: "Markazi Text Variable", "Vazirmatn Variable", Georgia, serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-low: var(--surface-low);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-on-primary: var(--on-primary);
+  --color-sand: var(--sand);
+  --color-secondary: var(--secondary);
+  --color-tertiary: var(--tertiary);
+}
+
+/* پالت روشن — آبیِ ملایم و آرام روی پس‌زمینه‌ی روشنِ مایل به آبی */
+:root {
+  color-scheme: light;
+  --bg: #f6f9fc;
+  --surface: #ffffff;
+  --surface-low: #eef3f9;
+  --surface-2: #e3ebf4;
+  --ink: #18222e;
+  --muted: #5a6675;
+  --line: #d8e2ee;
+  --primary: #3b76c4;
+  --primary-soft: #a9c8ec;
+  --on-primary: #ffffff;
+  --sand: #e6eef7;
+  --secondary: #4a90b8;
+  --tertiary: #6b7a8d;
+}
+
+/* پالت تاریک — آبیِ شب، آرام و پرکنتراست */
+.dark {
+  color-scheme: dark;
+  --bg: #0e151f;
+  --surface: #16202d;
+  --surface-low: #141d28;
+  --surface-2: #1d2937;
+  --ink: #e8eef6;
+  --muted: #9aa8ba;
+  --line: #2a3848;
+  --primary: #6aa9e9;
+  --primary-soft: #34597f;
+  --on-primary: #0c1620;
+  --sand: #1c2735;
+  --secondary: #5fa8d4;
+  --tertiary: #8d9cb0;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: var(--font-sans);
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+  /* تیترها با فونت display؛ line-height بازتر برای خوانایی فارسی */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    line-height: 1.35;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 28%, transparent);
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--surface-2);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--primary-soft);
+    border-radius: 10px;
+  }
+}

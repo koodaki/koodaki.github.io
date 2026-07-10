@@ -1,0 +1,51 @@
+# ────────────────────────────────────────────────────────────────
+#  پیکربندی Sveltia CMS (سازگار با Decap CMS)
+#  مستندات: https://github.com/sveltia/sveltia-cms
+# ────────────────────────────────────────────────────────────────
+
+backend:
+  name: github
+  repo: koodaki/koodaki.github.io
+  branch: main
+  # ⬇️ آدرس Cloudflare Worker که OAuth گیت‌هاب را انجام می‌دهد.
+  #    راهنمای ساختش در README آمده. تا قبل از ساختن آن، می‌توانی
+  #    با حالت محلی (local_backend) زیر کار کنی.
+  base_url: https://sveltia-cms-auth.latifi-hami.workers.dev
+
+# برای تست محلی روی کامپیوتر خودت (با اجرای `npx @sveltia/cms-server`):
+# این خط را در توسعه‌ی محلی فعال نگه دار؛ روی سایت منتشرشده تأثیری ندارد.
+local_backend: true
+
+# محل ذخیره‌ی فایل‌های آپلودشده (عکس/صوت) و آدرس عمومی‌شان.
+media_folder: "public/uploads"
+public_folder: "/uploads"
+
+# زبان رابط
+locale: fa
+
+collections:
+  - name: memories
+    label: خاطرات
+    label_singular: خاطره
+    description: خاطرات و لحظه‌های رشد فرزندم
+    folder: src/content/memories
+    create: true
+
+    # نام فایل بر اساس تاریخ + عنوان ساخته می‌شود.
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    identifier_field: title
+    sortable_fields: [date, title]
+    fields:
+      - { name: title, label: عنوان, widget: string }
+      - { name: date, label: تاریخ, widget: datetime }
+      - { name: tags, label: برچسب‌ها, widget: list, required: false }
+      - { name: cover, label: عکس کاور, widget: image, required: false }
+      - name: gallery
+        label: گالری عکس
+        widget: list
+        required: false
+        fields:
+          - { name: src, label: عکس, widget: image }
+          - { name: alt, label: توضیح کوتاه, widget: string, required: false }
+      - { name: audio, label: فایل صوتی, widget: file, required: false }
+      - { name: body, label: متن خاطره, widget: markdown }

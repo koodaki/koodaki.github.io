@@ -1,0 +1,69 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { withBase } from '../../lib/url';
+import { getSortedMemories, collectTags, memoriesByTag } from '../../lib/content';
+
+const base = import.meta.env.BASE_URL;
+const memories = await getSortedMemories();
+const tags = collectTags(memories);
+
+// برای هر برچسب، یک عکس نماینده (اولین کاور موجود) پیدا می‌کنیم.
+function tagCover(tag: string): string | undefined {
+  for (const m of memoriesByTag(memories, tag)) {
+    if (m.data.cover) return m.data.cover;
+    if (m.data.gallery?.[0]?.src) return m.data.gallery[0].src;
+  }
+  return undefined;
+}
+---
+
+<BaseLayout title="برچسب‌ها | خاطرات فردا">
+  <div class="mx-auto max-w-6xl px-5 py-14 md:px-10 md:py-20">
+    <section class="mb-14 max-w-2xl">
+      <h1 class="font-display text-4xl text-ink md:text-5xl">موضوع‌ها و لحظه‌ها</h1>
+      <p class="mt-3 text-lg leading-relaxed text-muted">
+        مجموعه‌ای از تاریخ زنده‌ی خانواده، سامان‌یافته بر اساس رشته‌هایی که هر خاطره را به هم پیوند می‌دهند.
+      </p>
+    </section>
+
+    {
+      tags.length === 0 ? (
+        <p class="py-20 text-center text-muted">هنوز برچسبی ثبت نشده.</p>
+      ) : (
+        <div class="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {tags.map((t) => {
+            const cover = tagCover(t.tag);
+            return (
+              <a
+                href={`${base}tags/${encodeURIComponent(t.tag)}/`}
+                class="group flex aspect-4/5 flex-col justify-between rounded-xl border border-line/60 bg-surface p-7 no-underline transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(142,151,117,0.16)]"
+              >
+                <div class="space-y-5">
+                  <div class="grid size-12 place-items-center rounded-full bg-primary-soft/15 text-primary">
+                    <svg class="size-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 22c4.5-3 8-7 8-12a8 8 0 1 0-16 0c0 5 3.5 9 8 12z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-display text-2xl text-ink">{t.tag}</h3>
+                    <p class="mt-1 text-xs text-muted">{t.count} خاطره</p>
+                  </div>
+                </div>
+                <div class="h-28 w-full overflow-hidden rounded-lg bg-surface-2">
+                  {cover && (
+                    <img
+                      src={withBase(cover)}
+                      alt={t.tag}
+                      loading="lazy"
+                      class="size-full object-cover opacity-70 grayscale transition-all duration-500 group-hover:opacity-100 group-hover:grayscale-0"
+                    />
+                  )}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )
+    }
+  </div>
+</BaseLayout>

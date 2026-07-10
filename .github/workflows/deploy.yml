@@ -1,0 +1,41 @@
+name: Deploy to GitHub Pages
+
+on:
+  # با هر push روی شاخه‌ی اصلی (شامل کامیت‌هایی که CMS می‌سازد) سایت بازساخته می‌شود.
+  push:
+    branches: [main]
+  # امکان اجرای دستی از تب Actions
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# اگر چند انتشار همزمان شد، فقط آخری اجرا شود.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build Astro site
+        uses: withastro/action@v3
+        with:
+          # Astro 7 به Node >= 22 نیاز دارد.
+          node-version: 22
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

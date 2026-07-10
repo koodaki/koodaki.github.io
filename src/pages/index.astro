@@ -1,0 +1,182 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import MemoryCard from '../components/MemoryCard.astro';
+import { withBase } from '../lib/url';
+import {
+  getSortedMemories,
+  excerpt,
+  formatFaDate,
+  collectTags,
+  collectPhotos,
+} from '../lib/content';
+
+const base = import.meta.env.BASE_URL;
+const memories = await getSortedMemories();
+
+const featured = memories[0];
+const recent = memories.slice(0, 3);
+const timeline = memories.slice(0, 6);
+const photos = collectPhotos(memories, 8);
+const tags = collectTags(memories).slice(0, 12);
+---
+
+<BaseLayout>
+  {/* ── قهرمان (Hero) ── */}
+  <section class="bg-surface-low">
+    <div
+      class="mx-auto flex max-w-6xl flex-col items-center gap-12 px-5 py-16 md:flex-row md:px-10 md:py-24"
+    >
+      <div class="flex-1 space-y-6 text-center md:text-right">
+        <h1 class="font-display text-4xl leading-tight text-primary sm:text-5xl md:text-6xl">
+          لحظه‌های کوچک،<br />برای همیشه ماندگار
+        </h1>
+        <p class="mx-auto max-w-xl text-lg leading-relaxed text-muted md:mx-0">
+          فضایی آرام برای نگه‌داشتن لحظه‌هایی که مهم‌اند؛ نخستین کلمه‌ها، قدم‌های
+          کوچک و خنده‌های فرزندم — همه در یک بایگانی زنده.
+        </p>
+        <div class="flex flex-wrap justify-center gap-4 pt-2 md:justify-start">
+
+          <a
+            href={`${base}archive/`}
+            class="rounded-full border border-primary px-8 py-3.5 text-sm font-medium text-primary no-underline transition hover:bg-primary hover:text-on-primary"
+          >
+            مرور آرشیو
+          </a>
+        </div>
+      </div>
+
+      <div class="relative aspect-square w-full max-w-md flex-1">
+        <div class="absolute inset-0 rotate-3 rounded-[40px] bg-primary-soft/15"></div>
+        {
+          featured?.data.cover ? (
+            <a
+              href={`${base}memories/${featured.id}/`}
+              class="absolute inset-0 -rotate-2 overflow-hidden rounded-[40px] bg-surface shadow-md"
+            >
+              <img
+                src={withBase(featured.data.cover)}
+                alt={featured.data.title}
+                class="size-full object-cover"
+              />
+            </a>
+          ) : (
+            <div class="absolute inset-0 -rotate-2 grid place-items-center rounded-[40px] bg-surface text-primary-soft/40 shadow-md">
+              <svg class="size-24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22c4.5-3 8-7 8-12a8 8 0 1 0-16 0c0 5 3.5 9 8 12z"></path>
+              </svg>
+            </div>
+          )
+        }
+      </div>
+    </div>
+  </section>
+
+  {
+    memories.length === 0 ? (
+      <section class="mx-auto max-w-2xl px-5 py-24 text-center">
+        <h2 class="font-display text-3xl text-ink">هنوز خاطره‌ای ثبت نشده</h2>
+        <p class="mx-auto mt-3 max-w-md text-muted">
+          از پنل مدیریت اولین خاطره را اضافه کن تا اینجا شکل بگیرد.
+        </p>
+      </section>
+    ) : (
+      <>
+        {/* ── تازه‌ترین خاطره‌ها ── */}
+        <section class="mx-auto max-w-6xl px-5 py-16 md:px-10 md:py-20">
+          <div class="mb-10 flex items-end justify-between">
+            <div>
+              <span class="text-sm text-primary">تازه‌ترین‌ها</span>
+              <h2 class="mt-1 font-display text-3xl text-ink md:text-4xl">خاطره‌های اخیر</h2>
+            </div>
+            <a
+              href={`${base}archive/`}
+              class="border-b border-primary pb-1 text-sm text-primary no-underline transition hover:opacity-70"
+            >
+              مشاهده‌ی همه
+            </a>
+          </div>
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {recent.map((m) => (
+              <MemoryCard
+                slug={m.id}
+                title={m.data.title}
+                date={m.data.date}
+                cover={m.data.cover}
+                tags={m.data.tags}
+                excerpt={excerpt(m.body)}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* ── خط زمانی رشد ── */}
+        <section class="bg-surface-low/40 py-16 md:py-20">
+          <div class="mx-auto max-w-2xl px-5">
+            <h2 class="mb-12 text-center font-display text-3xl text-ink md:text-4xl">خط زمانی رشد</h2>
+            <div class="relative space-y-10">
+              <div class="absolute bottom-2 top-2 right-[7px] w-px bg-line"></div>
+              {timeline.map((m, i) => (
+                <a href={`${base}memories/${m.id}/`} class="relative block pr-10 no-underline">
+                  <span
+                    class:list={[
+                      'absolute right-0 top-1.5 size-4 rounded-full border-4 border-bg',
+                      i === 0 ? 'bg-primary' : 'bg-line',
+                    ]}
+                  />
+                  <span class="text-xs text-muted/70">{formatFaDate(m.data.date)}</span>
+                  <h4 class="mt-1 font-display text-xl font-medium text-ink">{m.data.title}</h4>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── لحظه‌های ناب (گرید عکس) ── */}
+        {photos.length > 0 && (
+          <section class="mx-auto max-w-6xl px-5 py-16 md:px-10 md:py-20">
+            <div class="mb-10">
+              <h2 class="font-display text-3xl text-ink md:text-4xl">لحظه‌های ناب</h2>
+              <p class="mt-2 text-muted">نگاهی تصویری به این سفر زیبا.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+              {photos.map((p, i) => (
+                <a
+                  href={`${base}memories/${p.slug}/`}
+                  class:list={[
+                    'overflow-hidden rounded-2xl bg-sand shadow-sm',
+                    i % 4 === 1 ? 'md:mt-10' : '',
+                    i % 4 === 3 ? 'md:mt-6' : '',
+                  ]}
+                >
+                  <img
+                    src={withBase(p.src)}
+                    alt={p.alt}
+                    loading="lazy"
+                    class="aspect-square size-full object-cover transition-transform duration-700 hover:scale-105"
+                  />
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── گشت‌وگذار بر اساس موضوع ── */}
+        {tags.length > 0 && (
+          <section class="mx-auto max-w-4xl px-5 py-16 text-center md:py-20">
+            <h2 class="mb-8 font-display text-3xl text-ink md:text-4xl">گشت‌وگذار بر اساس موضوع</h2>
+            <div class="flex flex-wrap justify-center gap-3">
+              {tags.map((t) => (
+                <a
+                  href={`${base}tags/${encodeURIComponent(t.tag)}/`}
+                  class="rounded-full bg-surface-low px-6 py-2 text-sm text-muted no-underline transition hover:bg-primary hover:text-on-primary"
+                >
+                  {t.tag}
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+      </>
+    )
+  }
+</BaseLayout>

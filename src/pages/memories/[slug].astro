@@ -1,0 +1,141 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Gallery from '../../components/Gallery.tsx';
+import { withBase } from '../../lib/url';
+import { getSortedMemories, formatFaDate } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const memories = await getSortedMemories(); // جدید → قدیم
+  return memories.map((memory, i) => ({
+    params: { slug: memory.id },
+    props: {
+      memory,
+      newer: memories[i - 1] ?? null, // تازه‌تر
+      older: memories[i + 1] ?? null, // قدیمی‌تر
+    },
+  }));
+}
+
+const { memory, newer, older } = Astro.props;
+const { Content } = await render(memory);
+const { title, date, cover, gallery, audio, tags } = memory.data;
+
+const base = import.meta.env.BASE_URL;
+const memHref = (m: typeof newer) => (m ? `${base}memories/${m.id}/` : '#');
+---
+
+<BaseLayout title={`${title} | خاطرات فردا`}>
+  <article class="mx-auto max-w-5xl px-5 py-14 md:px-10 md:py-20">
+    {/* ── عنوان و متادیتا ── */}
+    <header class="mx-auto mb-12 max-w-3xl text-center">
+      <a
+        href={base}
+        class="mb-6 inline-flex items-center gap-1.5 text-sm text-muted no-underline transition hover:text-primary"
+      >
+        <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18l6-6-6-6"></path>
+        </svg>
+        بازگشت به خانه
+      </a>
+      <p class="mb-4 text-sm text-tertiary">{formatFaDate(date)}</p>
+      <h1 class="font-display text-4xl text-ink md:text-6xl">{title}</h1>
+      <div class="mx-auto mt-6 h-px w-12 bg-primary opacity-40"></div>
+    </header>
+
+    {/* ── کاور ── */}
+    {
+      cover && (
+        <div class="group mb-14 aspect-video overflow-hidden rounded-xl md:aspect-21/9">
+          <img
+            src={withBase(cover)}
+            alt={title}
+            class="size-full scale-105 object-cover transition-transform duration-1000 ease-out group-hover:scale-100"
+          />
+        </div>
+      )
+    }
+
+    {/* ── متن خاطره ── */}
+    <div
+      class="prose prose-lg prose-stone mx-auto max-w-2xl leading-loose dark:prose-invert prose-headings:font-display prose-headings:text-ink prose-a:text-primary prose-img:rounded-lg"
+    >
+      <Content />
+    </div>
+
+    {/* ── پخش‌کننده‌ی صوت ── */}
+    {
+      audio && (
+        <div class="mx-auto mt-16 max-w-2xl">
+          <figure class="rounded-2xl border border-line bg-surface-low p-6">
+            <figcaption class="mb-4 flex items-center gap-2 text-sm text-primary">
+              <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 10v4M7 6v12M11 3v18M15 7v10M19 10v4"></path>
+              </svg>
+              یادداشت صوتی
+            </figcaption>
+            <audio class="w-full" controls preload="none" src={withBase(audio)} />
+          </figure>
+        </div>
+      )
+    }
+
+    {/* ── گالری ── */}
+    {
+      gallery.length > 0 && (
+        <div class="mx-auto max-w-3xl">
+          <Gallery client:load images={gallery.map((g) => ({ src: withBase(g.src), alt: g.alt }))} />
+        </div>
+      )
+    }
+
+    {/* ── برچسب‌ها ── */}
+    {
+      tags.length > 0 && (
+        <div class="mx-auto mt-16 flex max-w-3xl flex-wrap justify-center gap-3">
+          {tags.map((t) => (
+            <a
+              href={`${base}tags/${encodeURIComponent(t)}/`}
+              class="rounded-full bg-sand px-5 py-2 text-sm text-ink no-underline transition hover:bg-primary hover:text-on-primary"
+            >
+              {t}
+            </a>
+          ))}
+        </div>
+      )
+    }
+
+    {/* ── ناوبری قبلی/بعدی ── */}
+    {
+      (older || newer) && (
+        <nav class="mx-auto mt-20 flex max-w-3xl flex-col items-stretch justify-between gap-6 border-t border-line pt-12 md:flex-row">
+          {older ? (
+            <a href={memHref(older)} class="group max-w-xs no-underline transition hover:opacity-70">
+              <span class="flex items-center gap-2 text-sm text-tertiary">
+                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 18l6-6-6-6"></path>
+                </svg>
+                خاطره‌ی قبلی
+              </span>
+              <span class="mt-1 block font-display text-xl text-ink">{older.data.title}</span>
+            </a>
+          ) : (
+            <span />
+          )}
+
+          {newer && (
+            <a href={memHref(newer)} class="group max-w-xs text-left no-underline transition hover:opacity-70 md:text-right">
+              <span class="flex items-center justify-end gap-2 text-sm text-tertiary">
+                خاطره‌ی بعدی
+                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 18l-6-6 6-6"></path>
+                </svg>
+              </span>
+              <span class="mt-1 block font-display text-xl text-ink">{newer.data.title}</span>
+            </a>
+          )}
+        </nav>
+      )
+    }
+  </article>
+</BaseLayout>

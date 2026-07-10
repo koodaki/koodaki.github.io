@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#f3ede6"/>
+  <circle cx="400" cy="210" r="90" fill="#c97b5a" opacity="0.85"/>
+  <text x="400" y="360" font-family="Segoe UI, Tahoma, sans-serif" font-size="34"
+        fill="#6b6b6b" text-anchor="middle">عکس نمونه</text>
+</svg>

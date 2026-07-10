@@ -1,0 +1,65 @@
+---
+import { withBase } from '../lib/url';
+import { formatFaDate } from '../lib/content';
+
+interface Props {
+  slug: string;
+  title: string;
+  date: Date;
+  cover?: string;
+  tags: string[];
+  excerpt?: string;
+}
+
+const { slug, title, date, cover, tags, excerpt } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const href = `${base}memories/${slug}/`;
+---
+
+<a
+  href={href}
+  class="group flex flex-col overflow-hidden rounded-xl border border-line/60 bg-surface shadow-[0_4px_20px_rgba(142,151,117,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(142,151,117,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+>
+  <div class="aspect-video overflow-hidden bg-sand">
+    {
+      cover ? (
+        <img
+          src={withBase(cover)}
+          alt={title}
+          loading="lazy"
+          class="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+      ) : (
+        <div class="grid size-full place-items-center text-primary-soft/50">
+          <svg class="size-12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22c4.5-3 8-7 8-12a8 8 0 1 0-16 0c0 5 3.5 9 8 12z"></path>
+            <path d="M12 22V10M12 14c-2 0-3.5-1.5-3.5-3.5M12 12c2 0 3.5-1.5 3.5-3.5"></path>
+          </svg>
+        </div>
+      )
+    }
+  </div>
+
+  <div class="flex flex-1 flex-col p-6">
+    <div class="mb-3 flex flex-wrap items-center gap-2">
+      {
+        tags.slice(0, 1).map((t) => (
+          <span class="rounded-full bg-surface-low px-3 py-1 text-xs text-muted">{t}</span>
+        ))
+      }
+      <time class="text-xs text-muted/70" datetime={date.toISOString()}>
+        {formatFaDate(date)}
+      </time>
+    </div>
+
+    <h3 class="font-display text-2xl font-medium leading-snug text-ink transition-colors group-hover:text-primary">
+      {title}
+    </h3>
+
+    {
+      excerpt && (
+        <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">{excerpt}</p>
+      )
+    }
+  </div>
+</a>

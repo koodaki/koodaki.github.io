@@ -1,0 +1,231 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import EntryRow from '../components/EntryRow.astro';
+import {
+  getSortedMemories,
+  excerpt,
+  collectTags,
+  formatFaMonthYear,
+  monthKey,
+} from '../lib/content';
+
+const memories = await getSortedMemories();
+const tags = collectTags(memories);
+
+// سال‌های شمسیِ یکتا (مرتب از جدید به قدیم، چون خاطرات از پیش مرتب‌اند).
+const jYears = [
+  ...new Set(memories.map((m) => m.data.date.toLocaleDateString('fa-IR', { year: 'numeric' }))),
+];
+
+// گروه‌بندی بر اساس ماه (مرتب‌شده از جدید به قدیم).
+const groupsMap = new Map<string, { label: string; items: typeof memories }>();
+for (const m of memories) {
+  const key = monthKey(m.data.date);
+  if (!groupsMap.has(key)) {
+    groupsMap.set(key, { label: formatFaMonthYear(m.data.date), items: [] });
+  }
+  groupsMap.get(key)!.items.push(m);
+}
+const groups = [...groupsMap.values()];
+---
+
+<BaseLayout title="آرشیو | خاطرات فردا">
+  <div class="mx-auto max-w-6xl px-5 py-14 md:px-10 md:py-20">
+    <section class="mb-14">
+      <h1 class="font-display text-4xl text-ink md:text-5xl">مجموعه</h1>
+      <p class="mt-3 max-w-2xl text-lg leading-relaxed text-muted">
+        گردایه‌ای از لحظه‌هایی که روزهای ما را می‌سازند — میراثی آرام، نگه‌داشته در واژه و حال‌وهوا.
+      </p>
+    </section>
+
+    {
+      memories.length === 0 ? (
+        <p class="py-20 text-center text-muted">هنوز خاطره‌ای ثبت نشده.</p>
+      ) : (
+        <div class="flex flex-col gap-12 lg:flex-row">
+          {/* ── نوار کناری فیلتر ── */}
+          <aside class="flex-shrink-0 space-y-8 lg:w-64">
+            {/* جستجوی تاریخ شمسی */}
+            <div>
+              <label for="date-search" class="mb-3 block text-sm text-muted">
+                جستجوی تاریخ (شمسی)
+              </label>
+              <div class="relative">
+                <svg class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="M21 21l-4.3-4.3"></path>
+                </svg>
+                <input
+                  id="date-search"
+                  type="search"
+                  inputmode="text"
+                  placeholder="مثلاً: ۱۴۰۵، تیر، ۴ تیر"
+                  class="w-full rounded-xl border border-line bg-surface py-2.5 pr-10 pl-3 text-sm text-ink placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+            </div>
+
+            {/* فیلتر سال شمسی */}
+            <div>
+              <label for="year-filter" class="mb-3 block text-sm text-muted">سال شمسی</label>
+              <select
+                id="year-filter"
+                class="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">همه‌ی سال‌ها</option>
+                {jYears.map((y) => (
+                  <option value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* فیلتر برچسب */}
+            <div>
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm text-muted">برچسب‌ها</h3>
+                <button id="clear-filters" class="hidden text-xs text-primary hover:underline" type="button">
+                  پاک‌کردن همه
+                </button>
+              </div>
+              <div class="mt-4 flex flex-wrap gap-2 lg:flex-col">
+                {tags.map((t) => (
+                  <button
+                    type="button"
+                    data-tag={t.tag}
+                    class="filter-btn flex items-center justify-between gap-2 rounded-full bg-surface-low px-4 py-2 text-right text-sm text-ink transition hover:bg-surface-2"
+                  >
+                    <span>{t.tag}</span>
+                    <span class="text-xs text-muted/70">{t.count}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          {/* ── فهرست خاطرات ── */}
+          <div class="flex-grow space-y-14" id="entries">
+            <p id="result-count" class="hidden text-sm text-muted"></p>
+
+            {groups.map((g) => (
+              <div class="month-block">
+                <div class="mb-7 flex items-center gap-4">
+                  <h2 class="font-display text-2xl text-primary">{g.label}</h2>
+                  <div class="h-px flex-grow bg-line"></div>
+                </div>
+                <div class="space-y-5">
+                  {g.items.map((m) => (
+                    <EntryRow
+                      slug={m.id}
+                      title={m.data.title}
+                      date={m.data.date}
+                      cover={m.data.cover}
+                      tags={m.data.tags}
+                      excerpt={excerpt(m.body)}
+                      hasAudio={!!m.data.audio}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <div id="empty-state" class="hidden py-20 text-center">
+              <h3 class="font-display text-2xl text-ink">خاطره‌ای پیدا نشد</h3>
+              <p class="mx-auto mt-2 max-w-sm text-muted">
+                با این جستجو یا فیلترها چیزی یافت نشد. شاید زیر تاریخ یا موضوعی دیگر بایگانی شده باشد.
+              </p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+  </div>
+
+  <script>
+    // روی هر بار بارگذاری صفحه (شامل ناوبری SPA) دوباره راه‌اندازی می‌شود.
+    function initArchive() {
+      const search = document.getElementById('date-search') as HTMLInputElement | null;
+      if (!search || search.dataset.bound) return;
+      search.dataset.bound = '1';
+
+      const entries = Array.from(document.querySelectorAll('#entries [data-tags]'));
+      if (entries.length === 0) return;
+
+      const blocks = document.querySelectorAll('.month-block');
+      const btns = document.querySelectorAll('.filter-btn');
+      const yearSel = document.getElementById('year-filter');
+      const clearBtn = document.getElementById('clear-filters');
+      const emptyState = document.getElementById('empty-state');
+      const countEl = document.getElementById('result-count');
+      const activeClass = ['bg-primary', 'text-on-primary', 'hover:bg-primary'];
+
+      const active = new Set();
+      let year = '';
+      let q = '';
+
+      // تبدیل ارقام فارسی/عربی به لاتین تا جستجو با هر دو کار کند.
+      const digits: Record<string, string> = { '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9','٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9' };
+      const norm = (s: string | null | undefined) => String(s || '').replace(/[۰-۹٠-٩]/g, (d) => digits[d]).replace(/\s+/g, ' ').trim().toLowerCase();
+
+      function visible(el: Element) {
+        const elTags = (el.getAttribute('data-tags') || '').split(',').filter(Boolean);
+        const tagOk = active.size === 0 || elTags.some((t) => active.has(t));
+        const yearOk = !year || el.getAttribute('data-jyear') === year;
+        const haystack = norm((el.textContent || '') + ' ' + (el.getAttribute('data-date') || ''));
+        const qOk = !q || haystack.includes(q);
+        return tagOk && yearOk && qOk;
+      }
+
+      function apply() {
+        let count = 0;
+        entries.forEach((el) => {
+          const show = visible(el);
+          el.classList.toggle('hidden', !show);
+          if (show) count++;
+        });
+        blocks.forEach((block) => {
+          const any = block.querySelectorAll('[data-tags]:not(.hidden)').length > 0;
+          block.classList.toggle('hidden', !any);
+        });
+
+        const filtering = active.size > 0 || !!year || !!q;
+        emptyState?.classList.toggle('hidden', count > 0);
+        clearBtn?.classList.toggle('hidden', !filtering);
+        if (countEl) {
+          countEl.classList.toggle('hidden', !filtering);
+          countEl.textContent = `${count} خاطره یافت شد`;
+        }
+      }
+
+      btns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const tag = btn.getAttribute('data-tag');
+          if (active.has(tag)) active.delete(tag);
+          else active.add(tag);
+          activeClass.forEach((c) => btn.classList.toggle(c, active.has(tag)));
+          apply();
+        });
+      });
+
+      search.addEventListener('input', () => {
+        q = norm(search.value);
+        apply();
+      });
+
+      yearSel?.addEventListener('change', () => {
+        year = (yearSel as HTMLSelectElement).value;
+        apply();
+      });
+
+      clearBtn?.addEventListener('click', () => {
+        active.clear();
+        year = '';
+        q = '';
+        btns.forEach((b) => b.classList.remove(...activeClass));
+        if (search) (search as HTMLInputElement).value = '';
+        if (yearSel) (yearSel as HTMLSelectElement).value = '';
+        apply();
+      });
+    }
+    document.addEventListener('astro:page-load', initArchive);
+  </script>
+</BaseLayout>
